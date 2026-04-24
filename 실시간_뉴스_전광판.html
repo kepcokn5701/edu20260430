@@ -33,27 +33,6 @@
   --radius: 16px;
 }
 
-/* 라이트 모드 */
-:root.light {
-  --bg-primary: #ffffff;
-  --bg-secondary: #ffffff;
-  --bg-card: #ffffff;
-  --bg-card-hover: #f5f6f8;
-  --bg-input: #f3f4f6;
-  --border: #d1d5db;
-  --border-hover: #9ca3af;
-  --text-primary: #111827;
-  --text-secondary: #374151;
-  --text-dim: #6b7280;
-  --text-muted: #9ca3af;
-  --badge-bg: #f3f4f6;
-  --blue: #2563eb;
-  --cyan: #0891b2;
-  --green: #059669;
-  --amber: #d97706;
-  --rose: #e11d48;
-  --purple: #7c3aed;
-}
 
 body {
   font-family: 'Noto Sans KR', sans-serif;
@@ -129,21 +108,6 @@ body {
   color: var(--text-secondary);
 }
 
-/* 테마 토글 */
-.theme-toggle {
-  width: 40px; height: 40px;
-  border-radius: 10px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  font-size: 20px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s;
-}
-.theme-toggle:hover { color: var(--amber); border-color: var(--amber); }
 
 .refresh-btn {
   padding: 8px 16px;
@@ -424,9 +388,6 @@ body {
     <div class="header-right">
       <div class="header-weather" id="weather">☀️ 로딩중...</div>
       <div class="header-clock" id="clock">--:--</div>
-      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="라이트/다크 모드 전환">
-        <i class="ri-moon-line" id="themeIcon"></i>
-      </button>
       <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">
         <i class="ri-refresh-line"></i> 새로고침
       </button>
@@ -495,24 +456,6 @@ body {
 </div>
 
 <script>
-// ── 테마 토글 ──
-function toggleTheme() {
-  const root = document.documentElement;
-  const icon = document.getElementById('themeIcon');
-  root.classList.toggle('light');
-  const isLight = root.classList.contains('light');
-  icon.className = isLight ? 'ri-sun-line' : 'ri-moon-line';
-  localStorage.setItem('theme', isLight ? 'light' : 'dark');
-}
-
-// 저장된 테마 복원
-(function() {
-  const saved = localStorage.getItem('theme');
-  if (saved === 'light') {
-    document.documentElement.classList.add('light');
-    document.getElementById('themeIcon').className = 'ri-sun-line';
-  }
-})();
 
 // ── 시계 & 날짜 ──
 function updateClock() {
