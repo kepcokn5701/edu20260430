@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>클로드 실전 마스터 - 슬라이드쇼</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: #0a0f1e;
+  color: #fff;
+  overflow: hidden;
+  height: 100vh;
+  user-select: none;
+}
+
+.slide-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.slide {
+  width: 90%;
+  max-width: 1100px;
+  height: 85vh;
+  border-radius: 24px;
+  padding: 50px 60px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity:0; transform: translateY(20px); }
+  to { opacity:1; transform: translateY(0); }
+}
+
+/* 슬라이드 배경 */
+.slide-1 { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0c4a6e 100%); }
+.slide-2 { background: linear-gradient(135deg, #1a1040 0%, #2d1b69 50%, #4c1d95 100%); }
+.slide-3 { background: linear-gradient(135deg, #0f2922 0%, #064e3b 50%, #065f46 100%); }
+.slide-4 { background: linear-gradient(135deg, #2a1215 0%, #7f1d1d 50%, #991b1b 100%); }
+.slide-5 { background: linear-gradient(135deg, #1c1917 0%, #44403c 50%, #57534e 100%); }
+
+.slide::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -30%;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.03);
+}
+
+.slide::after {
+  content: '';
+  position: absolute;
+  bottom: -40%;
+  left: -20%;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.02);
+}
+
+.slide-number {
+  position: absolute;
+  top: 30px;
+  left: 50px;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 2px;
+}
+
+.slide-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  width: fit-content;
+}
+
+.badge-blue { background: rgba(59,130,246,0.2); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+.badge-purple { background: rgba(139,92,246,0.2); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
+.badge-green { background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+.badge-red { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+.badge-amber { background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+
+.slide-title {
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 1.3;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.slide-subtitle {
+  font-size: 16px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 28px;
+  font-weight: 400;
+  font-style: italic;
+  position: relative;
+  z-index: 1;
+}
+
+.slide-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+  overflow-y: auto;
+}
+
+.content-card {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 20px 24px;
+  backdrop-filter: blur(10px);
+}
+
+.content-card h3 {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.content-card ul {
+  list-style: none;
+  padding: 0;
+}
+
+.content-card li {
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.8);
+  padding-left: 16px;
+  position: relative;
+  margin-bottom: 4px;
+}
+
+.content-card li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: rgba(255,255,255,0.4);
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.content-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+}
+
+.highlight-box {
+  background: rgba(255,255,255,0.05);
+  border-left: 3px solid rgba(255,255,255,0.3);
+  padding: 14px 18px;
+  border-radius: 0 12px 12px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  line-height: 1.6;
+  margin-top: 8px;
+}
+
+.message-box {
+  background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 16px;
+  padding: 16px 22px;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  color: rgba(255,255,255,0.9);
+  margin-top: auto;
+  line-height: 1.6;
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.step-blue { background: rgba(59,130,246,0.3); color: #93c5fd; }
+.step-purple { background: rgba(139,92,246,0.3); color: #c4b5fd; }
+.step-green { background: rgba(16,185,129,0.3); color: #6ee7b7; }
+.step-red { background: rgba(239,68,68,0.3); color: #fca5a5; }
+.step-amber { background: rgba(245,158,11,0.3); color: #fde68a; }
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.compare-table th {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.5);
+  font-weight: 600;
+}
+
+.compare-table td {
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.8);
+}
+
+/* 네비게이션 */
+.nav-bar {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 40px;
+  backdrop-filter: blur(20px);
+  z-index: 100;
+}
+
+.nav-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.15); }
+.nav-btn:disabled { opacity: 0.3; cursor: default; }
+
+.nav-dots {
+  display: flex;
+  gap: 8px;
+  margin: 0 8px;
+}
+
+.nav-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.nav-dot.active {
+  background: #fff;
+  width: 28px;
+  border-radius: 5px;
+}
+
+.slide-counter {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  margin: 0 4px;
+}
+
+.icon-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .slide { padding: 30px 24px; height: 88vh; }
+  .slide-title { font-size: 24px; }
+  .content-grid, .content-grid-3 { grid-template-columns: 1fr; }
+  .slide-number { left: 24px; }
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useCallback } = React;
+
+const slides = [
+  // ── Slide 1 ──
+  {
+    num: 1,
+    badge: { label: 'CLAUDE DESKTOP', cls: 'badge-blue' },
+    title: "클로드, 이제 내 PC와\n'한 몸'이 되다",
+    subtitle: '"단순 채팅을 넘어 내 파일을 읽고 쓰는 AI"',
+    bgClass: 'slide-1',
+    content: (
+      <>
+        <div className="content-grid">
+          <div className="content-card">
+            <h3><div className="icon-circle" style={{background:'rgba(59,130,246,0.2)', color:'#60a5fa'}}><i className="ri-computer-line"></i></div> Claude Desktop & MCP</h3>
+            <ul>
+              <li>내 PC 안의 엑셀·PDF·소스코드를 클로드가 <b>직접 읽고 분석</b></li>
+              <li>웹 채팅이 아닌, 로컬 환경에서 동작</li>
+              <li>회사 자료가 외부로 나가지 않는 <b>보안 유지</b></li>
+            </ul>
+          </div>
+          <div className="content-card">
+            <h3><div className="icon-circle" style={{background:'rgba(245,158,11,0.2)', color:'#fbbf24'}}><i className="ri-building-line"></i></div> 로컬 서버의 개념</h3>
+            <ul>
+              <li>내 PC = <b>'AI 기지'</b></li>
+              <li>클로드 = 그 기지의 <b>'사령관'</b></li>
+              <li>MCP = PC와 AI를 연결하는 <b>'다리'</b></li>
+            </ul>
+          </div>
+        </div>
+        <div className="message-box">
+          💡 "클로드에게 우리 팀만의 자료를 학습시키세요.<br/>보안은 지키고, 성능은 극대화됩니다."
+        </div>
+      </>
+    ),
+  },
+  // ── Slide 2 ──
+  {
+    num: 2,
+    badge: { label: '신기술 · REMOTE CONTROL', cls: 'badge-purple' },
+    title: '휴대폰으로 조종하는\n내 PC 클로드',
+    subtitle: '"출근길 지하철에서 내 책상 위 AI를 깨우다"',
+    bgClass: 'slide-2',
+    content: (
+      <>
+        <div className="content-card">
+          <h3><div className="icon-circle" style={{background:'rgba(139,92,246,0.2)', color:'#a78bfa'}}><i className="ri-smartphone-line"></i></div> 실시간 연동 시나리오</h3>
+          <ul>
+            <li>PC에서 <code style={{background:'rgba(255,255,255,0.1)', padding:'2px 8px', borderRadius:4, fontSize:13}}>claude remote-control</code> 명령 실행 → 폰이 <b>리모컨</b></li>
+            <li>출근길 지하철: "내 PC <b>보고서 폴더</b>에 있는 자료 요약해줘"</li>
+            <li>외근 중: "어제 작업한 <b>엑셀 파일</b> 분석 결과 알려줘"</li>
+            <li>회사 도착 시 → 이미 <b>보고서 초안</b>이 완성되어 있음!</li>
+          </ul>
+        </div>
+        <div className="content-grid">
+          <div className="content-card" style={{borderColor:'rgba(239,68,68,0.3)'}}>
+            <h3><span style={{color:'#fca5a5'}}>⚠️</span> 작동 조건 (꼭 기억!)</h3>
+            <ul>
+              <li>① PC <b>전원 ON</b> (절전모드 해제)</li>
+              <li>② Claude <b>앱 실행</b> 중이어야 함</li>
+            </ul>
+          </div>
+          <div className="content-card">
+            <h3>📱 ➜ ☁️ ➜ 🖥️</h3>
+            <ul>
+              <li>스마트폰에서 명령 →</li>
+              <li>클라우드로 전달 →</li>
+              <li>PC의 클로드가 실행</li>
+            </ul>
+          </div>
+        </div>
+        <div className="message-box">
+          💡 "장소에 상관없이 내 PC의 모든 데이터를 AI로 제어합니다."
+        </div>
+      </>
+    ),
+  },
+  // ── Slide 3 ──
+  {
+    num: 3,
+    badge: { label: 'GITHUB 이해하기', cls: 'badge-green' },
+    title: '깃허브(GitHub),\n꼭 써야 하나요?',
+    subtitle: '"내 비밀 일기장(PC)을 전 세계 공유 게시판(GitHub)으로"',
+    bgClass: 'slide-3',
+    content: (
+      <>
+        <div className="content-card">
+          <h3><div className="icon-circle" style={{background:'rgba(16,185,129,0.2)', color:'#34d399'}}><i className="ri-git-branch-line"></i></div> 깃허브는 필수 ❌  선택 ✅</h3>
+          <table className="compare-table">
+            <thead>
+              <tr><th>상황</th><th>로컬 PC 💻</th><th>깃허브 ☁️</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>혼자 쓸 때</td><td>✅ 충분</td><td>불필요</td></tr>
+              <tr><td>부장님께 링크 공유</td><td>❌ 불가</td><td>✅ 링크 한 줄</td></tr>
+              <tr><td>팀 협업</td><td>❌ 어려움</td><td>✅ 동시 수정</td></tr>
+              <tr><td>퇴근 후 모바일 확인</td><td>❌ PC 켜야 함</td><td>✅ 언제든 열람</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div className="highlight-box">
+          🔒 "깃허브에 <b>비공개(Private)</b> 모드가 있어 초대받은 사람만 볼 수 있습니다."<br/>
+          📖 비유: <b>로컬 PC = 비밀 일기장</b>, <b>깃허브 = 누구나 보는 신문사 게시판</b>
+        </div>
+      </>
+    ),
+  },
+  // ── Slide 4 ──
+  {
+    num: 4,
+    badge: { label: 'LIVE DEMO', cls: 'badge-red' },
+    title: "30초 만에 만드는\n'실시간 뉴스 대시보드'",
+    subtitle: '"말 한마디로 프로그램이 만들어지는 마법"',
+    bgClass: 'slide-4',
+    content: (
+      <>
+        <div className="content-card">
+          <h3><div className="icon-circle" style={{background:'rgba(239,68,68,0.2)', color:'#fca5a5'}}><i className="ri-magic-line"></i></div> 시연 순서</h3>
+          <ul>
+            <li><span className="step-number step-red">1</span>&nbsp; 클로드에 <b>프롬프트 한 줄</b> 입력</li>
+            <li><span className="step-number step-red">2</span>&nbsp; <b>Artifacts</b>(오른쪽 미리보기 창)에 즉시 결과물 등장</li>
+            <li><span className="step-number step-red">3</span>&nbsp; 실시간 뉴스·환율·비트코인 <b>자동 업데이트</b> 대시보드 완성</li>
+          </ul>
+        </div>
+        <div className="content-grid">
+          <div className="content-card">
+            <h3>✨ 수정도 말로!</h3>
+            <ul>
+              <li>"색상 바꿔줘" → <b>즉시 반영</b></li>
+              <li>"섹션 추가해줘" → <b>즉시 반영</b></li>
+              <li>"다크모드 만들어줘" → <b>즉시 반영</b></li>
+            </ul>
+          </div>
+          <div className="content-card">
+            <h3>🎯 핵심 포인트</h3>
+            <ul>
+              <li>코딩 지식 <b>제로</b></li>
+              <li>오직 <b>한국어 문장</b>으로만 제작</li>
+              <li>아이디어 = 프로그래밍</li>
+            </ul>
+          </div>
+        </div>
+        <div className="message-box">
+          💡 "코딩 한 줄 몰라도, 생각만 있다면 결과물은 클로드가 만듭니다."
+        </div>
+      </>
+    ),
+  },
+  // ── Slide 5 ──
+  {
+    num: 5,
+    badge: { label: 'ACTION PLAN', cls: 'badge-amber' },
+    title: "내일부터 당장 시작하는\n'Claude 워크플로우'",
+    subtitle: '"AI를 팀원으로 임명하는 3단계"',
+    bgClass: 'slide-5',
+    content: (
+      <>
+        <div className="content-grid-3">
+          <div className="content-card" style={{textAlign:'center'}}>
+            <div style={{fontSize:36, marginBottom:8}}>⚙️</div>
+            <h3 style={{justifyContent:'center'}}>STEP 1. 설정</h3>
+            <ul>
+              <li style={{paddingLeft:0, textAlign:'center'}}>&nbsp;Claude Desktop 설치</li>
+              <li style={{paddingLeft:0, textAlign:'center'}}>&nbsp;MCP로 업무 폴더 연결</li>
+              <li style={{paddingLeft:0, textAlign:'center'}}>&nbsp;<b>10분이면 완료</b></li>
+            </ul>
+          </div>
+          <div className="content-card" style={{textAlign:'center', border:'1px solid rgba(245,158,11,0.3)'}}>
+            <div style={{fontSize:36, marginBottom:8}}>💬</div>
+            <h3 style={{justifyContent:'center'}}>STEP 2. 소통</h3>
+            <ul>
+              <li style={{paddingLeft:0, textAlign:'center'}}>&nbsp;아침: "뉴스 요약해줘"</li>
+              <li style={{paddingLeft:0, textAlign:'center'}}>&nbsp;퇴근 전: "보고서 써줘"</li>
+              <li style={{paddingLeft:0, textAlign:'center'}}>&nbsp;<b>매일 말을 걸기</b></li>
+            </ul>
+          </div>
+          <div className="content-card" style={{textAlign:'center'}}>
+            <div style={{fontSize:36, marginBottom:8}}>🚀</div>
+            <h3 style={{justifyContent:'center'}}>STEP 3. 확장</h3>
+            <ul>
+              <li style={{paddingLeft:0, textAlign:'center'}}>&nbsp;결과물 깃허브 공유</li>
+              <li style={{paddingLeft:0, textAlign:'center'}}>&nbsp;팀원들과 협업</li>
+              <li style={{paddingLeft:0, textAlign:'center'}}>&nbsp;<b>조직 전체 확산</b></li>
+            </ul>
+          </div>
+        </div>
+        <div className="message-box" style={{fontSize:18, padding:'22px 28px'}}>
+          🤝 "AI는 도구가 아니라 <b>팀원</b>입니다.<br/>매일 말을 걸수록, 더 똑똑한 팀원이 됩니다."
+        </div>
+        <div style={{textAlign:'center', marginTop:8, color:'rgba(255,255,255,0.35)', fontSize:13, fontWeight:600}}>
+          감사합니다
+        </div>
+      </>
+    ),
+  },
+];
+
+function App() {
+  const [current, setCurrent] = useState(0);
+
+  const goTo = useCallback((idx) => {
+    if (idx >= 0 && idx < slides.length) setCurrent(idx);
+  }, []);
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1); }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [current, goTo]);
+
+  const s = slides[current];
+
+  return (
+    <div className="slide-container" onClick={(e) => {
+      if (e.target.closest('.nav-bar')) return;
+      goTo(current + 1);
+    }}>
+      <div className={`slide ${s.bgClass}`} key={current}>
+        <div className="slide-number">SLIDE {s.num} / {slides.length}</div>
+        <div className={`slide-badge ${s.badge.cls}`}>{s.badge.label}</div>
+        <div className="slide-title" style={{whiteSpace:'pre-line'}}>{s.title}</div>
+        <div className="slide-subtitle">{s.subtitle}</div>
+        <div className="slide-content">{s.content}</div>
+      </div>
+
+      <div className="nav-bar">
+        <button className="nav-btn" disabled={current === 0} onClick={(e) => { e.stopPropagation(); goTo(current - 1); }}>
+          <i className="ri-arrow-left-s-line"></i>
+        </button>
+        <div className="nav-dots">
+          {slides.map((_, i) => (
+            <div key={i} className={`nav-dot ${i === current ? 'active' : ''}`}
+                 onClick={(e) => { e.stopPropagation(); goTo(i); }} />
+          ))}
+        </div>
+        <span className="slide-counter">{current + 1} / {slides.length}</span>
+        <button className="nav-btn" disabled={current === slides.length - 1} onClick={(e) => { e.stopPropagation(); goTo(current + 1); }}>
+          <i className="ri-arrow-right-s-line"></i>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
