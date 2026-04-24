@@ -490,21 +490,43 @@ async function loadWeather() {
   }
 }
 
-// ── Google News RSS를 allorigins 프록시로 가져오기 ──
-async function fetchGoogleRSS(query) {
-  const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=ko&gl=KR&ceid=KR:ko`;
-  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}&timestamp=${Date.now()}`;
-  const res = await fetch(proxyUrl);
-  const json = await res.json();
+// ── 타임아웃 fetch ──
+function fetchWithTimeout(url, ms = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
+// ── Google News RSS 파싱 (XML → 배열) ──
+function parseRssXml(xmlText) {
   const parser = new DOMParser();
-  const xml = parser.parseFromString(json.contents, 'text/xml');
-  const items = xml.querySelectorAll('item');
-  return Array.from(items).map(item => ({
+  const xml = parser.parseFromString(xmlText, 'text/xml');
+  return Array.from(xml.querySelectorAll('item')).map(item => ({
     title: item.querySelector('title')?.textContent || '',
     link: item.querySelector('link')?.textContent || '',
     pubDate: item.querySelector('pubDate')?.textContent || '',
     description: item.querySelector('description')?.textContent || '',
   }));
+}
+
+// ── Google News RSS 가져오기 (allorigins → rss2json 폴백) ──
+async function fetchGoogleRSS(query) {
+  const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=ko&gl=KR&ceid=KR:ko`;
+
+  // 1차: allorigins 프록시
+  try {
+    const res = await fetchWithTimeout(`https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`);
+    const text = await res.text();
+    const items = parseRssXml(text);
+    if (items.length > 0) return items;
+  } catch (e) { console.log('allorigins 실패, rss2json 시도:', e.message); }
+
+  // 2차: rss2json 폴백
+  const res = await fetchWithTimeout(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`);
+  const data = await res.json();
+  if (data.status === 'ok' && data.items?.length > 0) return data.items;
+
+  throw new Error('RSS 로드 실패');
 }
 
 // ── 코스피 (뉴스 기반) ──
