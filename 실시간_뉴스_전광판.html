@@ -10,15 +10,20 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* 다크 모드 (기본) */
 :root {
-  --navy-900: #0a1628;
-  --navy-800: #0f1f3d;
-  --navy-700: #162d50;
-  --white: #ffffff;
-  --gray-100: #eef1f6;
-  --gray-200: #d8dde8;
-  --gray-400: #8892a8;
-  --gray-500: #6b7280;
+  --bg-primary: #0a1628;
+  --bg-secondary: #0f1f3d;
+  --bg-card: rgba(255,255,255,0.04);
+  --bg-card-hover: rgba(255,255,255,0.07);
+  --bg-input: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.08);
+  --border-hover: rgba(255,255,255,0.15);
+  --text-primary: #ffffff;
+  --text-secondary: #d8dde8;
+  --text-dim: #8892a8;
+  --text-muted: #6b7280;
+  --badge-bg: rgba(255,255,255,0.06);
   --blue: #3b82f6;
   --cyan: #06b6d4;
   --green: #10b981;
@@ -28,11 +33,34 @@
   --radius: 16px;
 }
 
+/* 라이트 모드 */
+:root.light {
+  --bg-primary: #f0f2f5;
+  --bg-secondary: #e8ebf0;
+  --bg-card: rgba(255,255,255,0.85);
+  --bg-card-hover: rgba(255,255,255,1);
+  --bg-input: rgba(0,0,0,0.04);
+  --border: rgba(0,0,0,0.08);
+  --border-hover: rgba(0,0,0,0.15);
+  --text-primary: #1a1a2e;
+  --text-secondary: #333;
+  --text-dim: #555;
+  --text-muted: #888;
+  --badge-bg: rgba(0,0,0,0.05);
+  --blue: #2563eb;
+  --cyan: #0891b2;
+  --green: #059669;
+  --amber: #d97706;
+  --rose: #e11d48;
+  --purple: #7c3aed;
+}
+
 body {
   font-family: 'Noto Sans KR', sans-serif;
-  background: linear-gradient(180deg, var(--navy-900), var(--navy-800));
-  color: var(--white);
+  background: linear-gradient(180deg, var(--bg-primary), var(--bg-secondary));
+  color: var(--text-primary);
   min-height: 100vh;
+  transition: background 0.4s, color 0.4s;
 }
 
 /* ── 헤더 ── */
@@ -74,7 +102,7 @@ body {
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 
 .header h1 { font-size: 32px; font-weight: 900; }
-.header-date { font-size: 14px; color: var(--gray-400); margin-top: 4px; }
+.header-date { font-size: 14px; color: var(--text-dim); margin-top: 4px; }
 
 .header-right {
   display: flex;
@@ -94,12 +122,28 @@ body {
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
   border-radius: 12px;
   font-size: 14px;
-  color: var(--gray-200);
+  color: var(--text-secondary);
 }
+
+/* 테마 토글 */
+.theme-toggle {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+.theme-toggle:hover { color: var(--amber); border-color: var(--amber); }
 
 .refresh-btn {
   padding: 8px 16px;
@@ -135,14 +179,14 @@ body {
   align-items: center;
   gap: 10px;
   padding: 14px 18px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 14px;
   flex: 1;
   min-width: 200px;
   transition: all 0.3s;
 }
-.stat-chip:hover { background: rgba(255,255,255,0.07); transform: translateY(-2px); }
+.stat-chip:hover { background: var(--bg-card-hover); transform: translateY(-2px); }
 
 .stat-icon {
   width: 40px; height: 40px;
@@ -153,7 +197,7 @@ body {
   font-size: 18px;
 }
 
-.stat-label { font-size: 11px; color: var(--gray-400); margin-bottom: 2px; }
+.stat-label { font-size: 11px; color: var(--text-dim); margin-bottom: 2px; }
 .stat-value { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .stat-change {
   font-size: 12px; font-weight: 600;
@@ -163,10 +207,10 @@ body {
 }
 .stat-change.up { color: var(--green); background: rgba(16,185,129,0.12); }
 .stat-change.down { color: var(--rose); background: rgba(244,63,94,0.12); }
-.stat-change.flat { color: var(--gray-400); background: rgba(255,255,255,0.06); }
+.stat-change.flat { color: var(--text-dim); background: var(--bg-input); }
 
 .stat-loading {
-  color: var(--gray-500);
+  color: var(--text-muted);
   font-size: 13px;
 }
 
@@ -182,10 +226,11 @@ body {
 
 /* ── 섹션 ── */
 .section {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
+  transition: all 0.3s;
 }
 
 .section-header {
@@ -193,7 +238,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid var(--border);
 }
 
 .section-icon {
@@ -218,7 +263,7 @@ body {
 .section-status {
   margin-left: auto;
   font-size: 11px;
-  color: var(--gray-500);
+  color: var(--text-muted);
 }
 
 /* ── 뉴스 카드 ── */
@@ -234,8 +279,8 @@ body {
 }
 
 .news-card:hover {
-  background: rgba(255,255,255,0.06);
-  border-color: rgba(255,255,255,0.1);
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
   transform: scale(1.03);
 }
 
@@ -263,7 +308,7 @@ body {
 
 .news-summary {
   font-size: 13px;
-  color: var(--gray-400);
+  color: var(--text-dim);
   line-height: 1.6;
   margin-bottom: 12px;
   display: -webkit-box;
@@ -280,7 +325,7 @@ body {
 
 .news-meta {
   font-size: 11px;
-  color: var(--gray-500);
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -289,9 +334,9 @@ body {
 .news-btn {
   padding: 6px 14px;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.05);
-  color: var(--white);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
   font-size: 12px;
   font-weight: 600;
   font-family: inherit;
@@ -312,7 +357,7 @@ body {
 
 .skeleton-line {
   height: 14px;
-  background: rgba(255,255,255,0.06);
+  background: var(--bg-input);
   border-radius: 6px;
   margin-bottom: 10px;
   animation: shimmer 1.5s infinite;
@@ -333,7 +378,7 @@ body {
 .error-msg {
   padding: 20px;
   text-align: center;
-  color: var(--gray-500);
+  color: var(--text-muted);
   font-size: 14px;
 }
 
@@ -345,9 +390,9 @@ body {
   padding: 20px 40px;
   max-width: 1440px;
   margin: 0 auto;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--border);
   font-size: 12px;
-  color: var(--gray-500);
+  color: var(--text-muted);
   display: flex;
   justify-content: center;
   gap: 20px;
@@ -379,6 +424,9 @@ body {
     <div class="header-right">
       <div class="header-weather" id="weather">☀️ 로딩중...</div>
       <div class="header-clock" id="clock">--:--</div>
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="라이트/다크 모드 전환">
+        <i class="ri-moon-line" id="themeIcon"></i>
+      </button>
       <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">
         <i class="ri-refresh-line"></i> 새로고침
       </button>
@@ -447,6 +495,25 @@ body {
 </div>
 
 <script>
+// ── 테마 토글 ──
+function toggleTheme() {
+  const root = document.documentElement;
+  const icon = document.getElementById('themeIcon');
+  root.classList.toggle('light');
+  const isLight = root.classList.contains('light');
+  icon.className = isLight ? 'ri-sun-line' : 'ri-moon-line';
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+}
+
+// 저장된 테마 복원
+(function() {
+  const saved = localStorage.getItem('theme');
+  if (saved === 'light') {
+    document.documentElement.classList.add('light');
+    document.getElementById('themeIcon').className = 'ri-sun-line';
+  }
+})();
+
 // ── 시계 & 날짜 ──
 function updateClock() {
   const now = new Date();
