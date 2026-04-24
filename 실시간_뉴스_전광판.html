@@ -439,18 +439,18 @@ body {
     <div class="news-list" id="techNews"><div class="skeleton"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div></div><div class="skeleton"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div></div><div class="skeleton"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div></div></div>
   </div>
 
-  <div class="section" id="sectionHealth">
+  <div class="section" id="sectionWorld">
     <div class="section-header">
-      <div class="section-icon" style="background:rgba(16,185,129,0.15); color:var(--green);"><i class="ri-heart-pulse-line"></i></div>
-      <div class="section-title">건강 / 웰니스</div>
-      <div class="section-status" id="healthStatus">로딩중...</div>
+      <div class="section-icon" style="background:rgba(16,185,129,0.15); color:var(--green);"><i class="ri-globe-line"></i></div>
+      <div class="section-title">세계 / 국제</div>
+      <div class="section-status" id="worldStatus">로딩중...</div>
     </div>
-    <div class="news-list" id="healthNews"><div class="skeleton"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div></div><div class="skeleton"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div></div><div class="skeleton"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div></div></div>
+    <div class="news-list" id="worldNews"><div class="skeleton"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div></div><div class="skeleton"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div></div><div class="skeleton"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div></div></div>
   </div>
 </main>
 
 <div class="footer">
-  <span>📡 데이터 출처: Google News RSS, CoinGecko API, open.er-api.com, wttr.in</span>
+  <span>📡 데이터 출처: Google News RSS, CoinGecko API, open.er-api.com, wttr.in, allorigins.win</span>
   <span>|</span>
   <span id="lastUpdate">마지막 업데이트: --:--</span>
 </div>
@@ -490,28 +490,39 @@ async function loadWeather() {
   }
 }
 
+// ── Google News RSS를 allorigins 프록시로 가져오기 ──
+async function fetchGoogleRSS(query) {
+  const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=ko&gl=KR&ceid=KR:ko`;
+  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}&timestamp=${Date.now()}`;
+  const res = await fetch(proxyUrl);
+  const json = await res.json();
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(json.contents, 'text/xml');
+  const items = xml.querySelectorAll('item');
+  return Array.from(items).map(item => ({
+    title: item.querySelector('title')?.textContent || '',
+    link: item.querySelector('link')?.textContent || '',
+    pubDate: item.querySelector('pubDate')?.textContent || '',
+    description: item.querySelector('description')?.textContent || '',
+  }));
+}
+
 // ── 코스피 (뉴스 기반) ──
 async function loadKospi() {
   try {
-    const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=코스피+지수+포인트&hl=ko&gl=KR&ceid=KR:ko'));
-    const data = await res.json();
-    if (data.status === 'ok' && data.items.length > 0) {
-      const titles = data.items.slice(0, 10).map(i => i.title + ' ' + (i.description || '')).join(' ');
-      // "2,847.32" 또는 "2847" 또는 "2,500포인트" 패턴 매칭
-      const match = titles.match(/(2[,.]?\d{3}(?:\.\d{1,2})?)\s*(?:포인트|선|p|으로|에서|대)/i)
-                 || titles.match(/코스피\s*(?:지수\s*)?(\d[,.]?\d{3}(?:\.\d{1,2})?)/)
-                 || titles.match(/(2[,.]?\d{3}\.\d{1,2})/);
-      if (match) {
-        const price = match[1].replace(',', '');
-        document.getElementById('kospiPrice').textContent = Number(price).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2});
-      } else {
-        document.getElementById('kospiPrice').textContent = '뉴스 참조';
-      }
-      document.getElementById('kospiChange').textContent = '뉴스 기반';
-      document.getElementById('kospiChange').className = 'stat-change flat';
+    const items = await fetchGoogleRSS('코스피 지수 포인트');
+    const titles = items.slice(0, 10).map(i => i.title + ' ' + i.description).join(' ');
+    const match = titles.match(/(2[,.]?\d{3}(?:\.\d{1,2})?)\s*(?:포인트|선|p|으로|에서|대)/i)
+               || titles.match(/코스피\s*(?:지수\s*)?(\d[,.]?\d{3}(?:\.\d{1,2})?)/)
+               || titles.match(/(2[,.]?\d{3}\.\d{1,2})/);
+    if (match) {
+      const price = match[1].replace(',', '');
+      document.getElementById('kospiPrice').textContent = Number(price).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2});
     } else {
-      throw new Error('no data');
+      document.getElementById('kospiPrice').textContent = '뉴스 참조';
     }
+    document.getElementById('kospiChange').textContent = '뉴스 기반';
+    document.getElementById('kospiChange').className = 'stat-change flat';
   } catch {
     document.getElementById('kospiPrice').textContent = '-';
     document.getElementById('kospiChange').textContent = '-';
@@ -550,33 +561,27 @@ async function loadExchangeRate() {
   }
 }
 
-// ── 전국 평균 휘발유 가격 (오피넷 RSS 기반) ──
+// ── 전국 평균 휘발유 가격 (뉴스 기반) ──
 async function loadGasPrice() {
   try {
-    const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=전국+평균+휘발유+가격+리터&hl=ko&gl=KR&ceid=KR:ko'));
-    const data = await res.json();
-    if (data.status === 'ok' && data.items.length > 0) {
-      const titles = data.items.slice(0, 10).map(i => i.title + ' ' + (i.description || '')).join(' ');
-      // "1,650원" 또는 "1650원" 또는 "1,650.5원" 패턴 매칭
-      const match = titles.match(/(1[,.]?\d{3}(?:\.\d{1,2})?)\s*원/);
-      if (match) {
-        const price = match[1].replace(',', '');
-        document.getElementById('gasPrice').textContent = `₩${Number(price).toLocaleString()}`;
-      } else {
-        document.getElementById('gasPrice').textContent = '뉴스 참조';
-      }
-      document.getElementById('gasChange').textContent = '뉴스 기반';
-      document.getElementById('gasChange').className = 'stat-change flat';
+    const items = await fetchGoogleRSS('전국 평균 휘발유 가격 리터');
+    const titles = items.slice(0, 10).map(i => i.title + ' ' + i.description).join(' ');
+    const match = titles.match(/(1[,.]?\d{3}(?:\.\d{1,2})?)\s*원/);
+    if (match) {
+      const price = match[1].replace(',', '');
+      document.getElementById('gasPrice').textContent = `₩${Number(price).toLocaleString()}`;
     } else {
-      throw new Error('no data');
+      document.getElementById('gasPrice').textContent = '뉴스 참조';
     }
+    document.getElementById('gasChange').textContent = '뉴스 기반';
+    document.getElementById('gasChange').className = 'stat-change flat';
   } catch {
     document.getElementById('gasPrice').textContent = '-';
     document.getElementById('gasChange').textContent = '-';
   }
 }
 
-// ── 뉴스 RSS (Google News → rss2json.com, 키 불필요) ──
+// ── 뉴스 RSS (Google News → allorigins 프록시) ──
 const NEWS_CONFIGS = [
   {
     query: '경제 금융 증시',
@@ -595,12 +600,12 @@ const NEWS_CONFIGS = [
     tagLabel: 'IT/AI',
   },
   {
-    query: '건강 운동 웰니스 식단',
-    containerId: 'healthNews',
-    statusId: 'healthStatus',
+    query: '세계 국제 뉴스 글로벌',
+    containerId: 'worldNews',
+    statusId: 'worldStatus',
     tagColor: 'rgba(16,185,129,0.15)',
     tagTextColor: '#10b981',
-    tagLabel: '건강',
+    tagLabel: '세계',
   },
 ];
 
@@ -643,33 +648,28 @@ function renderNewsCard(item, config) {
   `;
 }
 
-async function loadNews(config) {
+async function loadNews(config, configIndex) {
   const container = document.getElementById(config.containerId);
   const status = document.getElementById(config.statusId);
 
   try {
-    const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(config.query)}&hl=ko&gl=KR&ceid=KR:ko`;
-    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+    const items = await fetchGoogleRSS(config.query);
 
-    const res = await fetch(apiUrl);
-    const data = await res.json();
-
-    if (data.status === 'ok' && data.items && data.items.length > 0) {
-      const items = data.items.slice(0, 5);
-      container.innerHTML = items.map(item => renderNewsCard(item, config)).join('');
-      status.innerHTML = `<span style="color:var(--green)">●</span> ${items.length}건 로드됨`;
+    if (items.length > 0) {
+      const sliced = items.slice(0, 5);
+      container.innerHTML = sliced.map(item => renderNewsCard(item, config)).join('');
+      status.innerHTML = `<span style="color:var(--green)">●</span> ${sliced.length}건 로드됨`;
     } else {
       throw new Error('No items');
     }
   } catch (e) {
-    // RSS 실패 시 대체 메시지
     container.innerHTML = `
       <div class="error-msg">
         <i class="ri-wifi-off-line"></i>
         뉴스를 불러올 수 없습니다.<br>
         네트워크 연결을 확인하거나 잠시 후 다시 시도해주세요.
         <br><br>
-        <button class="refresh-btn" onclick="loadNews(NEWS_CONFIGS[${NEWS_CONFIGS.indexOf(config)}])" style="margin:0 auto;">
+        <button class="refresh-btn" onclick="loadNews(NEWS_CONFIGS[${configIndex ?? 0}], ${configIndex ?? 0})" style="margin:0 auto;">
           <i class="ri-refresh-line"></i> 다시 시도
         </button>
       </div>
@@ -690,7 +690,7 @@ async function refreshAll() {
     loadExchangeRate(),
     loadCrypto(),
     loadGasPrice(),
-    ...NEWS_CONFIGS.map(c => loadNews(c)),
+    ...NEWS_CONFIGS.map((c, i) => loadNews(c, i)),
   ]);
 
   const now = new Date();
