@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude 실무 활용 가이드</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --navy: #1a365d;
+  --navy-light: #2a4a7f;
+  --navy-dark: #0f2240;
+  --white: #ffffff;
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --blue-50: #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+  --green-500: #22c55e;
+  --green-600: #16a34a;
+  --amber-500: #f59e0b;
+  --red-500: #ef4444;
+  --red-600: #dc2626;
+}
+
+body {
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--gray-100);
+  overflow: hidden;
+  height: 100vh;
+  user-select: none;
+}
+
+/* ── 슬라이드 컨테이너 ── */
+.presentation {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateX(60px);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  padding: 80px 100px;
+}
+
+.slide.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.slide.exit-left {
+  opacity: 0;
+  transform: translateX(-60px);
+}
+
+/* ── 네비게이션 ── */
+.nav-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0; right: 0;
+  height: 76px;
+  background: var(--navy-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  z-index: 100;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+}
+
+.nav-btn {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.08);
+  color: var(--white);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.5); }
+.nav-btn:disabled { opacity: 0.3; cursor: default; }
+.nav-btn:disabled:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.25); }
+
+.indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  transition: all 0.35s;
+  cursor: pointer;
+}
+.dot.active {
+  background: var(--white);
+  width: 28px;
+  border-radius: 5px;
+}
+
+.slide-counter {
+  color: rgba(255,255,255,0.6);
+  font-size: 13px;
+  font-weight: 500;
+  min-width: 50px;
+  text-align: center;
+}
+
+/* ── 공통 스타일 ── */
+.slide-number {
+  position: absolute;
+  top: 20px; right: 32px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-400);
+  letter-spacing: 1px;
+}
+
+.slide h1 {
+  font-weight: 900;
+  line-height: 1.3;
+  letter-spacing: -0.5px;
+}
+
+.slide h2 {
+  font-weight: 800;
+  font-size: 40px;
+  color: var(--navy);
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.slide h3 {
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--navy);
+  margin-bottom: 12px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.subtitle {
+  font-size: 22px;
+  color: var(--gray-600);
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* ── Slide 1: 표지 ── */
+.slide-cover {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 50%, #3b6cb5 100%);
+  color: var(--white);
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 64px;
+  position: relative;
+  overflow: hidden;
+}
+
+.slide-cover::before {
+  content: '';
+  position: absolute;
+  top: -20%; right: -10%;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.03);
+}
+
+.slide-cover::after {
+  content: '';
+  position: absolute;
+  bottom: -30%; left: -15%;
+  width: 500px; height: 500px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.02);
+}
+
+.cover-content { position: relative; z-index: 1; }
+
+.cover-icon {
+  width: 80px; height: 80px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  margin: 0 auto 32px;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.cover-title {
+  font-size: 42px;
+  font-weight: 900;
+  margin-bottom: 16px;
+  line-height: 1.3;
+}
+
+.cover-subtitle {
+  font-size: 20px;
+  font-weight: 400;
+  opacity: 0.8;
+  margin-bottom: 40px;
+  line-height: 1.6;
+}
+
+.cover-meta {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+.cover-meta span { display: flex; align-items: center; gap: 6px; }
+
+.cover-divider {
+  width: 60px;
+  height: 3px;
+  background: rgba(255,255,255,0.4);
+  margin: 0 auto 24px;
+  border-radius: 2px;
+}
+
+/* ── Slide 2~6: 콘텐츠 ── */
+.slide-content {
+  background: var(--white);
+  padding-bottom: 100px;
+}
+
+.section-tag-navy {
+  background: var(--blue-50);
+  color: var(--navy);
+  border: 1px solid var(--blue-100);
+}
+
+.section-tag-green {
+  background: #f0fdf4;
+  color: var(--green-600);
+  border: 1px solid #dcfce7;
+}
+
+.section-tag-amber {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fef3c7;
+}
+
+.section-tag-red {
+  background: #fef2f2;
+  color: var(--red-600);
+  border: 1px solid #fecaca;
+}
+
+.section-tag-purple {
+  background: #faf5ff;
+  color: #7c3aed;
+  border: 1px solid #e9d5ff;
+}
+
+/* 카드 그리드 */
+.card-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.card-grid-2 { grid-template-columns: 1fr 1fr; }
+
+.card {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 14px;
+  padding: 20px;
+  transition: all 0.3s;
+}
+
+.card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+
+.card-icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.card h4 {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+
+.card p {
+  font-size: 16px;
+  color: var(--gray-600);
+  line-height: 1.65;
+}
+
+/* 비교 박스 */
+.compare-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  flex: 1;
+}
+
+.compare-box {
+  border-radius: 14px;
+  padding: 16px;
+  border: 1.5px solid;
+}
+
+.compare-bad {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.compare-good {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.compare-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 6px;
+  margin-bottom: 14px;
+}
+
+.compare-bad .compare-label { background: #fee2e2; color: var(--red-600); }
+.compare-good .compare-label { background: #dcfce7; color: var(--green-600); }
+
+.compare-text {
+  font-size: 17px;
+  color: var(--gray-700);
+  line-height: 1.7;
+  padding: 14px;
+  background: var(--white);
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.06);
+  word-break: keep-all;
+}
+
+/* 포인트 리스트 */
+.point-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.point-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  transition: all 0.3s;
+}
+
+.point-item:hover { background: var(--blue-50); border-color: var(--blue-100); }
+
+.point-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.point-content h4 {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+
+.point-content p {
+  font-size: 16px;
+  color: var(--gray-600);
+  line-height: 1.6;
+}
+
+/* 하이라이트 박스 */
+.highlight-box {
+  padding: 16px 20px;
+  border-radius: 12px;
+  font-size: 17px;
+  line-height: 1.7;
+  margin-top: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.highlight-navy {
+  background: var(--blue-50);
+  border: 1px solid var(--blue-100);
+  color: var(--navy);
+}
+
+.highlight-amber {
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  color: #92400e;
+}
+
+.highlight-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* 경고 카드 */
+.warning-card {
+  background: var(--white);
+  border: 1.5px solid;
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.warning-card.red { border-color: #fca5a5; background: #fff5f5; }
+.warning-card.amber { border-color: #fcd34d; background: #fffdf5; }
+.warning-card.blue { border-color: #93c5fd; background: #f8fbff; }
+
+.warning-icon {
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.warning-card.red .warning-icon { background: #fee2e2; }
+.warning-card.amber .warning-icon { background: #fef3c7; }
+.warning-card.blue .warning-icon { background: #dbeafe; }
+
+.warning-content h4 {
+  font-size: 19px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.warning-card.red .warning-content h4 { color: var(--red-600); }
+.warning-card.amber .warning-content h4 { color: #b45309; }
+.warning-card.blue .warning-content h4 { color: var(--blue-600); }
+
+.warning-content p {
+  font-size: 16px;
+  color: var(--gray-600);
+  line-height: 1.65;
+}
+
+/* ── Slide 7: 결론 ── */
+.slide-closing {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+  color: var(--white);
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 64px;
+}
+
+.closing-icon {
+  font-size: 48px;
+  margin-bottom: 24px;
+}
+
+.closing-title {
+  font-size: 36px;
+  font-weight: 900;
+  margin-bottom: 20px;
+}
+
+.closing-message {
+  font-size: 20px;
+  opacity: 0.85;
+  line-height: 1.7;
+  max-width: 700px;
+  margin: 0 auto 36px;
+}
+
+.closing-quote {
+  font-size: 22px;
+  font-weight: 700;
+  padding: 20px 36px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.15);
+  display: inline-block;
+  margin-bottom: 40px;
+}
+
+.closing-qna {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 18px;
+  opacity: 0.7;
+}
+
+/* 슬라이드 내 fade-in 애니메이션 */
+.slide.active .fade-in {
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+.fade-in { opacity: 0; transform: translateY(15px); }
+.delay-1 { animation-delay: 0.1s !important; }
+.delay-2 { animation-delay: 0.2s !important; }
+.delay-3 { animation-delay: 0.3s !important; }
+.delay-4 { animation-delay: 0.4s !important; }
+.delay-5 { animation-delay: 0.5s !important; }
+
+@keyframes fadeInUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── 반응형 ── */
+@media (max-width: 900px) {
+  .slide { padding: 32px; }
+  .card-grid-3 { grid-template-columns: 1fr; }
+  .card-grid-2 { grid-template-columns: 1fr; }
+  .compare-row { grid-template-columns: 1fr; }
+  .cover-title { font-size: 28px; }
+  .slide h2 { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+
+<div class="presentation" id="presentation">
+
+  <!-- ==================== Slide 1: 표지 ==================== -->
+  <div class="slide slide-cover active" data-index="0">
+    <div class="cover-content">
+      <div class="cover-icon fade-in">&#x1F916;</div>
+      <div class="cover-divider fade-in delay-1"></div>
+      <h1 class="cover-title fade-in delay-2">AI를 비서처럼 활용하는 법<br>Claude 실무 활용 가이드</h1>
+      <p class="cover-subtitle fade-in delay-3">업무 효율화를 위한 생성형 AI 프롬프트 꿀팁</p>
+    </div>
+  </div>
+
+  <!-- ==================== Slide 2: 왜 클로드인가 ==================== -->
+  <div class="slide slide-content" data-index="1">
+    <div class="slide-number">02 / 07</div>
+    <div class="tag section-tag-navy fade-in">&#x1F4A1; WHY CLAUDE</div>
+    <h2 class="fade-in delay-1">왜 '클로드(Claude)'인가?</h2>
+    <p class="subtitle fade-in delay-2" style="margin-bottom:24px;">다른 AI와 차별화되는 클로드만의 강점 3가지</p>
+    <div class="card-grid card-grid-3 fade-in delay-3">
+      <div class="card">
+        <div class="card-icon" style="background:#eff6ff; color:#2563eb;">&#x1F4DD;</div>
+        <h4>보고서 최적화</h4>
+        <p>딱딱한 공문체부터 부드러운 안내문까지, <b>말투를 자유자재로 변환</b>합니다. 보고서 초안 작성 시간을 획기적으로 단축할 수 있습니다.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:#f0fdf4; color:#16a34a;">&#x1F4DA;</div>
+        <h4>대용량 문서 분석</h4>
+        <p>수십 페이지의 기술 지침서, 매뉴얼, 규정집을 <b>한 번에 읽고 핵심만 요약</b>해 줍니다. 복잡한 내용도 깔끔하게 정리됩니다.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:#faf5ff; color:#7c3aed;">&#x2699;&#xFE0F;</div>
+        <h4>Artifacts 기능</h4>
+        <p>코딩을 몰라도 <b>계산기, 대시보드, 체크리스트</b> 같은 웹 도구를 즉시 생성할 수 있습니다. 바로 사용 가능합니다.</p>
+      </div>
+    </div>
+    <div class="highlight-box highlight-navy fade-in delay-4">
+      <span class="highlight-icon">&#x1F4AC;</span>
+      <span><b>핵심:</b> 클로드는 자연스러운 한국어, 긴 문서 처리 능력, 실시간 코드 실행이 가능한 AI입니다.</span>
+    </div>
+  </div>
+
+  <!-- ==================== Slide 3: 페르소나 설정 ==================== -->
+  <div class="slide slide-content" data-index="2">
+    <div class="slide-number">03 / 07</div>
+    <div class="tag section-tag-green fade-in">&#x1F3AF; 꿀팁 1</div>
+    <h2 class="fade-in delay-1">페르소나(역할) 부여하기</h2>
+    <p class="subtitle fade-in delay-2" style="margin-bottom:24px;">클로드에게 <b>'직무'</b>를 정해주면 답변의 전문성이 180도 달라집니다.</p>
+    <div class="compare-row fade-in delay-3">
+      <div class="compare-box compare-bad">
+        <div class="compare-label">&#x274C; 나쁜 예 (막연한 요청)</div>
+        <div class="compare-text">
+          "전력설비 주변 나무 전지 작업할 때 주의사항 알려줘."
+        </div>
+        <div style="margin-top:14px; font-size:13px; color:#991b1b; line-height:1.6;">
+          &#x26A0;&#xFE0F; 결과 예상: "장갑을 끼세요", "사다리를 조심하세요", "나무가 전선에 닿지 않게 하세요" 같은 아주 일반적인 답변만 나옵니다.
+        </div>
+      </div>
+      <div class="compare-box compare-good">
+        <div class="compare-label">&#x2705; 좋은 예 (역할 부여)</div>
+        <div class="compare-text">
+          "<b>(Role)</b> 너는 20년 차 베테랑 배전운영실 과장이야. <b>(Target)</b> 이제 막 현장에 투입된 현장 작업자들에게 <b>(Deliverable)</b> TBM 때 활용할 자료와 작업전 체크리스트를 짜줘.<br><br>단, 산업안전보건법 및 공사 안전관리 지침을 준수하는 전문적인 용어를 사용하고, 감전 사고 예방을 위한 이격거리 준수 내용을 강조해줘."
+        </div>
+        <div style="margin-top:14px; font-size:13px; color:#166534; line-height:1.6;">
+          &#x2728; 결과 예상: 활선작업차 위치 선정, 특고압 절연장갑 등급 확인, 충전부와의 이격거리 수치(cm) 명시 등 당장 현장에 배포해도 될 수준의 전문 답변
+        </div>
+      </div>
+    </div>
+    <div class="highlight-box highlight-navy fade-in delay-4">
+      <span class="highlight-icon">&#x1F4A1;</span>
+      <span><b>TIP:</b> "~전문가", "~컨설턴트", "~담당자" 등 역할을 붙이면 관련 분야에 특화된 답변을 얻을 수 있습니다.</span>
+    </div>
+  </div>
+
+  <!-- ==================== Slide 4: 제약조건 설정 ==================== -->
+  <div class="slide slide-content" data-index="3">
+    <div class="slide-number">04 / 07</div>
+    <div class="tag section-tag-amber fade-in">&#x1F3AF; 꿀팁 2</div>
+    <h2 class="fade-in delay-1">구체적인 상황과 제약조건 설정</h2>
+    <p class="subtitle fade-in delay-2" style="margin-bottom:20px;">배경 지식이 없는 클로드에게 <b>'우리 상황'</b>을 알려주세요.</p>
+    <div class="point-list fade-in delay-3">
+      <div class="point-item">
+        <div class="point-icon" style="background:#dbeafe; color:#2563eb;">&#x1F465;</div>
+        <div class="point-content">
+          <h4>대상 (누구에게?)</h4>
+          <p>보고/발송 대상을 명확히 지정합니다. 예: "부장님께 보고할 내부 검토 보고서", "민원인에게 발송할 안내 답변"</p>
+        </div>
+      </div>
+      <div class="point-item">
+        <div class="point-icon" style="background:#dcfce7; color:#16a34a;">&#x1F4CB;</div>
+        <div class="point-content">
+          <h4>형식 (어떻게?)</h4>
+          <p>원하는 출력 형태를 지정합니다. 예: "표 형식으로", "번호가 매겨진 리스트로", "보고서체(~함, ~임)로 작성"</p>
+        </div>
+      </div>
+      <div class="point-item">
+        <div class="point-icon" style="background:#fef3c7; color:#b45309;">&#x1F4CF;</div>
+        <div class="point-content">
+          <h4>길이 (얼마나?)</h4>
+          <p>분량을 명시합니다. 예: "A4 반 페이지 분량으로 요약해줘", "3줄로 핵심만", "500자 이내로"</p>
+        </div>
+      </div>
+    </div>
+    <div class="highlight-box highlight-amber fade-in delay-4">
+      <span class="highlight-icon">&#x1F4CC;</span>
+      <span><b>기억하세요:</b> 대상 + 형식 + 길이, 이 세 가지만 추가해도 결과물의 품질이 확연히 달라집니다!</span>
+    </div>
+  </div>
+
+  <!-- ==================== Slide 5: Artifacts 활용 ==================== -->
+  <div class="slide slide-content" data-index="4">
+    <div class="slide-number">05 / 07</div>
+    <div class="tag section-tag-purple fade-in">&#x1F3AF; 꿀팁 3</div>
+    <h2 class="fade-in delay-1">Artifacts 실무 활용</h2>
+    <p class="subtitle fade-in delay-2" style="margin-bottom:20px;">텍스트를 넘어 <b>눈에 보이는 결과물</b>을 만들어 보세요.</p>
+    <div class="card-grid card-grid-2 fade-in delay-3">
+      <div class="card" style="border-left: 4px solid #2563eb;">
+        <h4>&#x26A1; 실무 예시 1: 전기요금 대시보드</h4>
+        <p style="margin-bottom:10px; font-size:13px; color:var(--gray-400); font-weight:600;">&#x1F4AC; 프롬프트 예시</p>
+        <div style="background:var(--white); border:1px solid var(--gray-200); border-radius:8px; padding:14px; font-size:12.5px; color:var(--gray-700); line-height:1.7;">
+          "초보자들을 위한 AI 교육 시연용으로 쓸 <b>'인터랙티브 전기요금 대시보드'</b>를 HTML로 만들어줘.<br><br>
+          <b>[시각적 요소]</b><br>
+          &#x2022; 슬라이더: 사용량(kWh)을 손으로 조절할 수 있는 슬라이더 바<br>
+          &#x2022; 실시간 차트: 누진 단계에 따른 요금 변화 막대 그래프<br>
+          &#x2022; 반응형: 조절 시 버튼 없이 요금이 즉각 변경<br><br>
+          <b>[분위기]</b><br>
+          미니멀한 대시보드 스타일, 순수 CSS와 JS로 작성"
+        </div>
+        <p style="margin-top:10px; font-size:13px;">&#x2192; 슬라이더로 조작하는 인터랙티브 요금 계산 대시보드가 즉시 생성됩니다.</p>
+      </div>
+      <div class="card" style="border-left: 4px solid #7c3aed;">
+        <h4>&#x1F4CA; 실무 예시 2: 구내정전 체크리스트</h4>
+        <p style="margin-bottom:10px; font-size:13px; color:var(--gray-400); font-weight:600;">&#x1F4AC; 프롬프트 예시</p>
+        <div style="background:var(--white); border:1px solid var(--gray-200); border-radius:8px; padding:14px; font-size:12.5px; color:var(--gray-700); line-height:1.7;">
+          "너는 한국전력공사의 고객 지원 전문가야. 일반 시민들이 구내정전 시 당황하지 않고 스스로 점검해볼 수 있는 <b>'구내정전 체크리스트'</b>를 만들어줘.<br><br>
+          <b>[기획 의도]</b><br>
+          '한전 출동이 필요한 상황'인지 '자체 수리가 필요한 상황'인지 구분해주는 것이 목적.<br><br>
+          <b>[체크리스트 내용]</b><br>
+          1. 이웃집 확인 → (Yes) 한전 고장신고 / (No) 다음 단계<br>
+          2. 차단기 확인 → (Yes) 민간 전기공사업체 / (No) 메인 차단기 확인<br><br>
+          <b>[디자인]</b><br>
+          순수 HTML/SVG/CSS만 사용. 스마트폰 세로형 카드 스타일. 질문에 따라 버튼을 누르면 다음 단계가 나타나는 인터랙티브 형식."
+        </div>
+        <p style="margin-top:10px; font-size:13px;">&#x2192; 고객들이 사용할 수 있는 구내정전 자가진단 체크리스트가 즉시 생성됩니다.</p>
+      </div>
+    </div>
+    <div class="highlight-box highlight-navy fade-in delay-4" style="margin-top:auto;">
+      <span class="highlight-icon">&#x1F4BB;</span>
+      <span><b>활용법:</b> 오른쪽 Artifacts 창에서 실시간으로 결과를 확인하며, 색상 변경, 기능 추가 등 즉석에서 수정 요청이 가능합니다.</span>
+    </div>
+  </div>
+
+  <!-- ==================== Slide 6: 보안 및 주의사항 ==================== -->
+  <div class="slide slide-content" data-index="5">
+    <div class="slide-number">06 / 07</div>
+    <div class="tag section-tag-red fade-in">&#x1F6A8; 필수 확인</div>
+    <h2 class="fade-in delay-1">데이터 보안 및 주의사항</h2>
+    <p class="subtitle fade-in delay-2" style="margin-bottom:20px;">공기업 직원이 <b>반드시</b> 지켜야 할 가이드라인</p>
+    <div style="display:flex; flex-direction:column; gap:16px; flex:1;" class="fade-in delay-3">
+      <div class="warning-card red">
+        <div class="warning-icon">&#x1F6AB;</div>
+        <div class="warning-content">
+          <h4>개인정보 입력 절대 금지</h4>
+          <p>고객 성함, 연락처, 고유식별정보(주민번호 등)를 AI에 입력하지 마세요. 개인정보보호법 위반에 해당할 수 있습니다.</p>
+        </div>
+      </div>
+      <div class="warning-card amber">
+        <div class="warning-icon">&#x1F512;</div>
+        <div class="warning-content">
+          <h4>비공개 기밀 입력 주의</h4>
+          <p>대외비 문서, 미발표 공사 전략, 내부 전용 기술 자료 등은 AI에 입력하지 않습니다. 공개 가능한 정보만 사용하세요.</p>
+        </div>
+      </div>
+      <div class="warning-card blue">
+        <div class="warning-icon">&#x1F50D;</div>
+        <div class="warning-content">
+          <h4>교차 검증(Fact-Check) 필수</h4>
+          <p>AI는 그럴듯한 거짓말(할루시네이션)을 할 수 있습니다. <b>기술 수치, 법령, 규정</b>은 반드시 실제 지침서와 대조 확인하세요.</p>
+        </div>
+      </div>
+    </div>
+    <div class="highlight-box highlight-amber fade-in delay-4" style="margin-top:12px;">
+      <span class="highlight-icon">&#x26A0;&#xFE0F;</span>
+      <span><b>원칙:</b> AI 결과물은 '초안'입니다. 최종 판단과 책임은 항상 사람에게 있습니다.</span>
+    </div>
+  </div>
+
+  <!-- ==================== Slide 7: 결론 및 질의응답 ==================== -->
+  <div class="slide slide-closing" data-index="6">
+    <div class="closing-icon fade-in">&#x1F91D;</div>
+    <h1 class="closing-title fade-in delay-1">결론 및 질의응답</h1>
+    <p class="closing-message fade-in delay-2">
+      AI는 <b>'대체자'</b>가 아니라<br>내 업무를 돕는 <b>'유능한 인턴'</b>입니다.
+    </p>
+    <div class="closing-quote fade-in delay-3">
+      &#x1F4AC; "프롬프트는 대화입니다. 한 번에 안 나오면 피드백을 주고 수정시키세요!"
+    </div>
+    <div class="cover-divider fade-in delay-4" style="margin-bottom:24px;"></div>
+    <div class="closing-qna fade-in delay-5">
+      &#x2753; 질문 있으신가요?
+    </div>
+  </div>
+
+</div>
+
+<!-- ── 네비게이션 바 ── -->
+<div class="nav-bar">
+  <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)" disabled>&#x25C0;</button>
+  <div class="indicator" id="indicator"></div>
+  <div class="slide-counter" id="slideCounter">1 / 7</div>
+  <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">&#x25B6;</button>
+  <button class="nav-btn" id="fullscreenBtn" onclick="toggleFullscreen()" title="전체화면 (F)">&#x26F6;</button>
+</div>
+
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+const indicator = document.getElementById('indicator');
+const counter = document.getElementById('slideCounter');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+// 인디케이터 도트 생성
+for (let i = 0; i < total; i++) {
+  const dot = document.createElement('div');
+  dot.className = 'dot' + (i === 0 ? ' active' : '');
+  dot.onclick = () => goToSlide(i);
+  indicator.appendChild(dot);
+}
+
+function updateUI() {
+  // 슬라이드 전환
+  slides.forEach((s, i) => {
+    s.classList.remove('active', 'exit-left');
+    if (i === current) {
+      s.classList.add('active');
+    } else if (i < current) {
+      s.classList.add('exit-left');
+    }
+  });
+
+  // 인디케이터
+  const dots = indicator.querySelectorAll('.dot');
+  dots.forEach((d, i) => {
+    d.classList.toggle('active', i === current);
+  });
+
+  // 카운터
+  counter.textContent = `${current + 1} / ${total}`;
+
+  // 버튼 상태
+  prevBtn.disabled = current === 0;
+  nextBtn.disabled = current === total - 1;
+}
+
+function changeSlide(dir) {
+  const next = current + dir;
+  if (next < 0 || next >= total) return;
+  current = next;
+  updateUI();
+}
+
+function goToSlide(index) {
+  if (index < 0 || index >= total) return;
+  current = index;
+  updateUI();
+}
+
+// 키보드 조작
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); changeSlide(-1); }
+  if (e.key === 'Home') { e.preventDefault(); goToSlide(0); }
+  if (e.key === 'End') { e.preventDefault(); goToSlide(total - 1); }
+  if (e.key === 'f' || e.key === 'F' || e.key === 'ㄹ') { e.preventDefault(); toggleFullscreen(); }
+  if (e.key === 'Escape' && document.fullscreenElement) { e.preventDefault(); document.exitFullscreen(); }
+});
+
+// 전체화면
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+document.addEventListener('fullscreenchange', () => {
+  const btn = document.getElementById('fullscreenBtn');
+  btn.innerHTML = document.fullscreenElement ? '&#x2716;' : '&#x26F6;';
+  btn.title = document.fullscreenElement ? '전체화면 해제 (F)' : '전체화면 (F)';
+});
+
+// 초기화
+updateUI();
+</script>
+
+</body>
+</html>

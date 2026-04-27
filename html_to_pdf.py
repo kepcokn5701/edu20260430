@@ -1,18 +1,14 @@
 import os
 import time
-import json
-import base64
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
 from PIL import Image
 from io import BytesIO
 
-html_path = os.path.abspath(r"c:\Users\Admin\Desktop\project\edu\클로드_실전마스터_슬라이드쇼.html")
-pdf_path = r"c:\Users\Admin\Desktop\project\edu\클로드_실전마스터_슬라이드쇼.pdf"
+html_path = os.path.abspath(r"c:\Users\Admin\Desktop\project\edu\클로드_실무활용_가이드.html")
+pdf_path = r"c:\Users\Admin\Desktop\project\edu\클로드_실무활용_가이드.pdf"
 
-# Chrome 설정
+# Chrome 설정 (16:9 비율)
 opts = Options()
 opts.add_argument('--headless=new')
 opts.add_argument('--window-size=1920,1080')
@@ -23,24 +19,24 @@ opts.add_argument('--ignore-certificate-errors')
 
 driver = webdriver.Chrome(options=opts)
 driver.get(f'file:///{html_path}')
-time.sleep(3)  # React 렌더링 + 폰트 로딩 대기
+time.sleep(3)
 
-total_slides = 5
+# 네비게이션 바 숨기기
+driver.execute_script("document.querySelector('.nav-bar').style.display = 'none';")
+time.sleep(0.5)
+
+total_slides = 7
 screenshots = []
 
 for i in range(total_slides):
-    time.sleep(1)  # 애니메이션 완료 대기
+    time.sleep(1)
     png = driver.get_screenshot_as_png()
     img = Image.open(BytesIO(png)).convert('RGB')
     screenshots.append(img)
     print(f"  슬라이드 {i+1}/{total_slides} 캡처 완료")
 
-    # 다음 슬라이드로 이동 (마지막 제외)
     if i < total_slides - 1:
-        driver.execute_script("""
-            const btns = document.querySelectorAll('.nav-btn');
-            btns[btns.length - 1].click();
-        """)
+        driver.execute_script("changeSlide(1);")
 
 driver.quit()
 
